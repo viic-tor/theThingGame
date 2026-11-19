@@ -35,6 +35,7 @@ import type {
   RoomSettings,
   UserProfile,
 } from './types/game';
+import { enterFullscreen, isTouchMobileDevice } from './utils/fullscreen';
 
 export const App: React.FC = () => {
   const [booting, setBooting] = useState(true);
@@ -65,6 +66,23 @@ export const App: React.FC = () => {
     void getCurrentProfile()
       .then((p) => setProfile(p))
       .finally(() => setBooting(false));
+  }, []);
+
+  // Automatically enter true fullscreen on the first touch/click gesture on mobile devices
+  // so the browser URL bar hides immediately and maximizes playable screen space.
+  useEffect(() => {
+    if (!isTouchMobileDevice()) return;
+    const handleFirstGesture = () => {
+      void enterFullscreen();
+      window.removeEventListener('pointerdown', handleFirstGesture);
+      window.removeEventListener('touchend', handleFirstGesture);
+    };
+    window.addEventListener('pointerdown', handleFirstGesture, { passive: true });
+    window.addEventListener('touchend', handleFirstGesture, { passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstGesture);
+      window.removeEventListener('touchend', handleFirstGesture);
+    };
   }, []);
 
   // Subscribe to Realtime transport whenever entering a room

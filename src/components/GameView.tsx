@@ -13,12 +13,15 @@ import {
   Ghost,
   LogOut,
   Map as MapIcon,
+  Maximize2,
+  Minimize2,
   Radar,
   Skull,
   Volume2,
   VolumeX,
   Wind,
   Wrench,
+  X,
 } from 'lucide-react';
 import {
   BASE_PLAYER_SPEED,
@@ -65,6 +68,7 @@ import { ResultsModal } from './ResultsModal';
 import { SecurityModal, type UtilityModalMode } from './SecurityModal';
 import { VirtualJoystick } from './VirtualJoystick';
 import { TaskModal } from './minigames/TaskModal';
+import { useFullscreen } from '../utils/fullscreen';
 
 interface GameViewProps {
   room: RoomData;
@@ -133,6 +137,8 @@ export const GameView: React.FC<GameViewProps> = ({
   const [utilityModal, setUtilityModal] = useState<UtilityModalMode>(null);
   const [activeCameraIdx, setActiveCameraIdx] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [dismissedFsHint, setDismissedFsHint] = useState(false);
+  const fullscreen = useFullscreen();
 
   // Keep refs synced with latest React props:
   // - Locally simulated actors (self + host-simulated bots) keep local 60fps coordinates
@@ -1146,7 +1152,7 @@ export const GameView: React.FC<GameViewProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-[#050811] overflow-hidden select-none game-touch-surface">
+    <div className="fixed inset-0 h-[100dvh] w-[100dvw] bg-[#050811] overflow-hidden select-none game-touch-surface">
       {/* FULL-SCREEN 60FPS GAME CANVAS */}
       <canvas ref={canvasRef} className="w-full h-full block" />
 
@@ -1158,7 +1164,10 @@ export const GameView: React.FC<GameViewProps> = ({
       {/* ROLE REVEAL INTRO OVERLAY */}
       {showRoleIntro && room.status === 'playing' && (
         <div
-          onClick={() => setShowRoleIntro(false)}
+          onClick={() => {
+            void fullscreen.enterIfMobile();
+            setShowRoleIntro(false);
+          }}
           className="fixed inset-0 z-50 bg-slate-950/92 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center cursor-pointer"
         >
           <div className="max-w-md space-y-4">
@@ -1202,7 +1211,7 @@ export const GameView: React.FC<GameViewProps> = ({
       )}
 
       {/* TOP HUD BAR */}
-      <div className="fixed top-0 left-0 right-0 z-20 p-2.5 sm:p-3 pt-[max(0.6rem,var(--safe-top))] pointer-events-none flex items-start justify-between gap-2">
+      <div className="fixed top-0 left-0 right-0 z-20 p-1.5 sm:p-3 pt-[max(0.45rem,var(--safe-top))] pointer-events-none flex items-start justify-between gap-1.5">
         {/* Left: Task Bar + Collapsible Task List */}
         <div className="pointer-events-auto flex flex-col gap-1.5 max-w-[62vw] sm:max-w-xs">
           {/* Global Task Progress Bar */}
@@ -1282,12 +1291,30 @@ export const GameView: React.FC<GameViewProps> = ({
           )}
         </div>
 
-        {/* Right: Map, Audio, Leave */}
+        {/* Right: Fullscreen, Map, Audio, Leave */}
         <div className="pointer-events-auto flex items-center gap-1.5">
+          {fullscreen.supported && !fullscreen.standalone && (
+            <button
+              type="button"
+              onClick={() => void fullscreen.toggle()}
+              className={`p-2 sm:p-2.5 rounded-xl border shadow-lg transition ${
+                fullscreen.isFullscreen
+                  ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                  : 'bg-slate-950/85 border-slate-700 hover:border-cyan-400 text-slate-200'
+              }`}
+              title={fullscreen.isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+            >
+              {fullscreen.isFullscreen ? (
+                <Minimize2 className="w-5 h-5" />
+              ) : (
+                <Maximize2 className="w-5 h-5" />
+              )}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setMinimapMode('map')}
-            className="p-2.5 rounded-xl bg-slate-950/85 border border-slate-700 hover:border-cyan-400 text-cyan-300 shadow-lg"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-950/85 border border-slate-700 hover:border-cyan-400 text-cyan-300 shadow-lg"
             title="Mapa Táctico (M)"
           >
             <MapIcon className="w-5 h-5" />
@@ -1299,7 +1326,7 @@ export const GameView: React.FC<GameViewProps> = ({
               setMuted(next);
               soundEngine.setMuted(next);
             }}
-            className="p-2.5 rounded-xl bg-slate-950/85 border border-slate-700 hover:border-cyan-400 text-slate-300 shadow-lg"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-950/85 border border-slate-700 hover:border-cyan-400 text-slate-300 shadow-lg"
             title={muted ? 'Activar sonido' : 'Silenciar'}
           >
             {muted ? <VolumeX className="w-5 h-5 text-rose-400" /> : <Volume2 className="w-5 h-5" />}
@@ -1307,7 +1334,7 @@ export const GameView: React.FC<GameViewProps> = ({
           <button
             type="button"
             onClick={onLeaveRoom}
-            className="p-2.5 rounded-xl bg-slate-950/85 border border-slate-700 hover:border-rose-500 text-slate-300 hover:text-rose-300 shadow-lg"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-950/85 border border-slate-700 hover:border-rose-500 text-slate-300 hover:text-rose-300 shadow-lg"
             title="Salir de la partida"
           >
             <LogOut className="w-5 h-5" />
@@ -1315,11 +1342,39 @@ export const GameView: React.FC<GameViewProps> = ({
         </div>
       </div>
 
-      {/* MOBILE ROOM PILL + ACTIVE SABOTAGE ALERT */}
-      <div className="fixed top-[72px] left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center gap-1.5 w-[90vw] max-w-md">
+      {/* MOBILE ROOM PILL + FULLSCREEN PROMPT + ACTIVE SABOTAGE ALERT */}
+      <div className="fixed top-[64px] left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center gap-1.5 w-[92vw] max-w-md">
         <div className="md:hidden px-3 py-1 rounded-full bg-slate-950/80 border border-slate-700/70 text-[11px] font-display font-bold text-cyan-300">
           {currentRoomName.toUpperCase()} {!meLive.isAlive ? '• FANTASMA' : `• ${aliveCount} VIVOS`}
         </div>
+
+        {/* 1-tap Mobile Fullscreen Prompt (hides browser URL bar!) */}
+        {fullscreen.isMobile && !fullscreen.isFullscreen && !dismissedFsHint && (
+          <div className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-950/95 border border-cyan-400/70 text-[11px] text-cyan-100 shadow-xl">
+            {fullscreen.supported ? (
+              <button
+                type="button"
+                onClick={() => void fullscreen.enter()}
+                className="flex items-center gap-1.5 font-bold text-cyan-200 hover:text-white"
+              >
+                <Maximize2 className="w-3.5 h-3.5 text-cyan-300" />
+                Toca aquí para Pantalla Completa
+              </button>
+            ) : fullscreen.ios ? (
+              <span className="text-[10px]">
+                iPhone: <strong>Compartir → Añadir a inicio</strong> para ocultar la barra
+              </span>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setDismissedFsHint(true)}
+              className="p-0.5 text-cyan-300/80 hover:text-white"
+              aria-label="Cerrar aviso"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {activeSab && (
           <div className="px-4 py-2 rounded-xl bg-rose-950/92 border border-rose-500 text-rose-100 text-xs font-bold flex items-center gap-2 shadow-xl">

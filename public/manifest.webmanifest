@@ -1,0 +1,20 @@
+{
+  "name": "Among Us 2",
+  "short_name": "Among Us 2",
+  "description": "Juego web multijugador en tiempo real para hasta 40 jugadores, 6 impostores y 3 mapas.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#070b14",
+  "theme_color": "#070b14",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

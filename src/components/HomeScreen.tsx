@@ -4,6 +4,8 @@ import {
   HelpCircle,
   LogOut,
   Map as MapIcon,
+  Maximize2,
+  Minimize2,
   Palette,
   PlusCircle,
   Skull,
@@ -15,6 +17,7 @@ import {
 import { MAP_LIST } from '../maps';
 import { isSupabaseConfigured } from '../services/supabaseClient';
 import type { MapId, UserProfile } from '../types/game';
+import { useFullscreen } from '../utils/fullscreen';
 import { AvatarSVG } from './AvatarSVG';
 
 interface HomeScreenProps {
@@ -39,6 +42,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [busy, setBusy] = useState<'create' | 'join' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showRules, setShowRules] = useState(false);
+  const fullscreen = useFullscreen();
 
   const handleCreate = async () => {
     setError(null);
@@ -86,6 +90,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {fullscreen.supported && !fullscreen.standalone && (
+              <button
+                type="button"
+                onClick={() => void fullscreen.toggle()}
+                className={`p-2.5 rounded-xl border transition flex items-center gap-1.5 text-xs font-semibold ${
+                  fullscreen.isFullscreen
+                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                    : 'bg-slate-900 border-slate-700 hover:border-cyan-400 text-slate-300 hover:text-white'
+                }`}
+                title={fullscreen.isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+              >
+                {fullscreen.isFullscreen ? (
+                  <Minimize2 className="w-5 h-5" />
+                ) : (
+                  <Maximize2 className="w-5 h-5" />
+                )}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setShowRules((v) => !v)}

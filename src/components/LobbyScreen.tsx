@@ -6,7 +6,9 @@ import {
   Crown,
   LogOut,
   Map as MapIcon,
+  Maximize2,
   MessageSquare,
+  Minimize2,
   Palette,
   Play,
   Send,
@@ -25,6 +27,7 @@ import {
 import { clampImpostorCount } from '../engine/rules';
 import { MAP_LIST } from '../maps';
 import type { ChatMessage, RoomData, RoomPlayer, RoomSettings } from '../types/game';
+import { useFullscreen } from '../utils/fullscreen';
 import { AvatarSVG } from './AvatarSVG';
 
 interface LobbyScreenProps {
@@ -60,6 +63,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   const [starting, setStarting] = useState(false);
   const [botBusy, setBotBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fullscreen = useFullscreen();
 
   const me = players.find((p) => p.id === myPlayerId);
   const isHost = Boolean(me?.isHost);
@@ -104,6 +108,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
   const handleStart = async () => {
     if (!isHost || !canStart) return;
+    void fullscreen.enterIfMobile();
     setStarting(true);
     setError(null);
     try {
@@ -194,6 +199,24 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               <Palette className="w-4 h-4 text-cyan-300" />
               <span className="hidden sm:inline">Avatar</span>
             </button>
+            {fullscreen.supported && !fullscreen.standalone && (
+              <button
+                type="button"
+                onClick={() => void fullscreen.toggle()}
+                className={`p-2 rounded-xl border transition ${
+                  fullscreen.isFullscreen
+                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                    : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-cyan-400'
+                }`}
+                title={fullscreen.isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+              >
+                {fullscreen.isFullscreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </header>
