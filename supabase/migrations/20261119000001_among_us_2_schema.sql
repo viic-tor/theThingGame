@@ -530,3 +530,20 @@ begin
     alter publication supabase_realtime add table public.match_votes;
   end if;
 end $$;
+
+-- ----------------------------------------------------------------------------
+-- 10. PERMISOS EXPLÍCITOS PARA ROLES DE SUPABASE (Postgres 17+ / Publishable Keys)
+-- ----------------------------------------------------------------------------
+grant usage on schema public to authenticated, anon;
+
+grant select, insert, update on public.profiles to authenticated;
+grant select, insert, update, delete on public.rooms to authenticated;
+grant select, insert, update, delete on public.room_players to authenticated;
+grant select, insert, update on public.match_votes to authenticated;
+grant select, insert on public.room_messages to authenticated;
+grant select, insert on public.match_history to authenticated;
+
+grant execute on function public.is_member_of_room(uuid) to authenticated;
+grant execute on function public.is_dead_in_room(uuid) to authenticated;
+grant execute on function public.join_room_by_code(text, text, jsonb) to authenticated;
+grant execute on function public.record_my_match_stats(boolean, boolean, integer, integer) to authenticated;
